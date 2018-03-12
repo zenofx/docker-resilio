@@ -1,0 +1,43 @@
+version: '2.3'
+
+services:
+  rslsync:
+    container_name: resilio 
+    build: .
+    restart: unless-stopped
+    networks:
+      - net
+    extra_hosts:
+      - "electra:172.17.0.1"
+    ports:
+      - 3838:3838/udp
+      - 50890:50890/tcp
+      - 50890:50890/udp
+      - 127.0.0.1:8890:8890
+    dns:
+      - 213.133.98.98
+      - 2a01:4f8:0:a0a1::add:1010
+      - 213.133.99.99
+      - 2a01:4f8:0:a102::add:9999
+      - 213.133.100.100
+      - 2a01:4f8:0:a111::add:9898
+    environment:
+      - PGID=1002
+      - PUID=1002
+      - TZ=Europe/Berlin
+    volumes:
+      - /home/rslsync/config:/config
+      - /home/rslsync/sync:/sync
+      - app:/app
+
+volumes:
+  app:
+
+networks:
+  net:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 2a01:4f8:1c17:42a2:2::/80
