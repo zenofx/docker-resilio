@@ -6,6 +6,7 @@ services:
     build:
       context: .
     image: zeno/resilio:latest
+    userns_mode: "host"
     restart: unless-stopped
     networks:
       - net

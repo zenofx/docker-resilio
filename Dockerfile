@@ -21,7 +21,8 @@ ENV UNAME=${UNAME} \
 ENV TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
 
 RUN \
-	apt-get update \
+	set -x \
+	&& apt-get update \
 	&& apt-get install -y --no-install-recommends \
 		tzdata \
 		curl \
@@ -37,7 +38,8 @@ COPY ./su-exec-0.2/su-exec /usr/local/bin/
 COPY ./root/sync.conf /config/sync.conf
 
 RUN \
-	echo ${TZ} > /etc/timezone \
+	set -x \
+	&& echo ${TZ} > /etc/timezone \
 	&& dpkg-reconfigure -f noninteractive tzdata 2>&1 \
 	&& mkdir -p /config /sync /app \
 	&& groupadd -r -g ${GID} ${UNAME} \
