@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -ex
 
 log()
 {
@@ -10,16 +10,16 @@ log()
 rsinst()
 {
 	log "downloading resilio-sync ${SYNC_VER} for ${SYNC_ARCH}."
-	su-exec $UID:$GID \
+	setpriv --reuid $UID --regid $GID --clear-groups --reset-env \
 	curl -s -o /app/version.txt -L "https://download-cdn.getsync.com/stable/linux-x64/version.txt" \
 		&& curl -s -o /app/sync.tar.gz -L "https://download-cdn.getsync.com/${SYNC_VER}/linux-${SYNC_ARCH}/resilio-sync_${SYNC_ARCH}.tar.gz" \
-		&& su-exec $UID:$GID tar xf /app/sync.tar.gz -C /app \
-		&& su-exec $UID:$GID rm -f /app/sync.tar.gz
+		&& setpriv --reuid $UID --regid $GID --clear-groups --reset-env tar xf /app/sync.tar.gz -C /app \
+		&& setpriv --reuid $UID --regid $GID --clear-groups --reset-env rm -f /app/sync.tar.gz
 }
 
 rsrepl()
 {
-	su-exec $UID:$GID \
+	setpriv --reuid $UID --regid $GID --clear-groups --reset-env \
 	curl -s -o /app/version_new.txt -L "https://download-cdn.getsync.com/${SYNC_VER}/linux-${SYNC_ARCH}/version.txt"
 	if [[ -f /app/version.txt && -f /app/version_new.txt ]]; then
 		mapfile -t < /app/version.txt
@@ -51,10 +51,14 @@ fixperms()
 		&& chown -R $UID:$GID /config /app
 }
 
-log "setting timezone to ${TZ}"
-echo ${TZ} > /etc/timezone
-dpkg-reconfigure -f noninteractive tzdata
+settime()
+{
+	log "setting timezone to ${TZ}"
+	ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+	dpkg-reconfigure -f noninteractive tzdata 2>&1
+}
 
+settime
 fixperms
 
 if [[ ! -e /app/rslsync ]]; then
@@ -63,4 +67,4 @@ else
 	rsrepl
 fi
 
-exec su-exec $UID:$GID "$@"
+exec setpriv --reuid $UID --regid $GID --clear-groups --reset-env "$@"

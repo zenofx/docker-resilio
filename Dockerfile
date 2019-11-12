@@ -6,8 +6,8 @@ ARG SYNC_ARCH="x64"
 ARG SYNC_VER="stable"
 ARG UNAME="rslsync"
 ARG TZ="Europe/Berlin"
-ARG UID="1002"
-ARG GID="1002"
+ARG UID="1000"
+ARG GID="1000"
 ARG CHANGE_SYNC_DIR_OWNERSHIP="false"
 
 ENV UNAME=${UNAME} \
@@ -34,25 +34,22 @@ RUN \
 	&& rm -rf /var/lib/apt/lists/* /usr/share/man/* /tmp/* /var/tmp/*
 
 COPY ./entrypoint.sh /entrypoint.sh
-COPY ./su-exec-0.2/su-exec /usr/local/bin/
 COPY ./root/sync.conf /config/sync.conf
 
 RUN \
 	set -x \
-	&& echo ${TZ} > /etc/timezone \
+	&& ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
 	&& dpkg-reconfigure -f noninteractive tzdata 2>&1 \
 	&& mkdir -p /config /sync /app \
 	&& groupadd -r -g ${GID} ${UNAME} \
 	&& useradd -M -d /app -r -u ${UID} -g ${GID} -s /bin/false ${UNAME} \
 	&& chown -vR ${UID}:${GID} /config /sync /app \
-	&& chmod a+x /entrypoint.sh /usr/local/bin/su-exec
-
-USER ${UNAME}
-VOLUME [ "/config", "/sync", "/app" ]
-USER root
+	&& chmod a+x /entrypoint.sh
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ "/app/rslsync", "--nodaemon", "--config", "/config/sync.conf" ]
 
 # ports and volumes
 EXPOSE 3838/udp 50890/tcp 50890/udp 8890/tcp
+
+VOLUME [ "/config", "/sync", "/app" ]

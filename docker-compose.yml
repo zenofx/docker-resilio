@@ -1,4 +1,4 @@
-version: '2.3'
+version: '2.4'
 
 services:
   rslsync:
@@ -17,7 +17,7 @@ services:
       - 3838:3838/udp
       - 50890:50890/tcp
       - 50890:50890/udp
-      - 127.0.0.1:8890:8890/tcp
+      - 127.0.0.1:8891:8891/tcp
     dns:
       - 213.133.98.98
       - 2a01:4f8:0:a0a1::add:1010
@@ -25,12 +25,15 @@ services:
       - 2a01:4f8:0:a102::add:9999
       - 213.133.100.100
       - 2a01:4f8:0:a111::add:9898
+    environment:
+      - UID=1002
+      - GID=1002
     volumes:
       - /home/rslsync/config:/config
       - /home/rslsync/sync:/sync
       - app:/app
     labels:
-      - com.centurylinklabs.watchtower.enable=true
+      - com.ouroboros.enable=true
 volumes:
   app:
 
