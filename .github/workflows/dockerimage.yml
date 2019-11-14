@@ -1,0 +1,28 @@
+name: Docker Image CI
+
+on: [push]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+      
+    - name: Set tag var
+      id: vars
+      run: echo ::set-output name=docker_tag::$(echo ${GITHUB_REF} | cut -d'/' -f3)-${GITHUB_SHA}
+      
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag zeno/resilio:${{ steps.vars.outputs.docker_tag }} --tag zeno/resilio:latest
+      
+    - name: Docker push
+      run: |
+            echo "$DOCKER_TOKEN" | docker login --username "$DOCKER_USERNAME" --password-stdin
+            docker push zeno/resilio:latest
+            docker logout
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_REGISTRY_USER }}
+        DOCKER_TOKEN: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
