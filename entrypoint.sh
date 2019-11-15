@@ -4,23 +4,26 @@ set -ex
 
 log()
 {
-    echo \[$(date +'%Y%m%d %H:%M:%S.%3N')\] $HOSTNAME $*
+    printf "[%s (%s)]: %s\n" "$(date '+%Y%m%d %H:%M:%S.%3N')" "${HOSTNAME}" "$*"
+}
+
+spriv()
+{
+	command setpriv --reuid $UID --regid $GID --clear-groups --reset-env "$@"
 }
 
 rsinst()
 {
 	log "downloading resilio-sync ${SYNC_VER} for ${SYNC_ARCH}."
-	setpriv --reuid $UID --regid $GID --clear-groups --reset-env \
-	curl -s -o /app/version.txt -L "https://download-cdn.getsync.com/stable/linux-x64/version.txt" \
+	spriv curl -s -o /app/version.txt -L "https://download-cdn.getsync.com/stable/linux-x64/version.txt" \
 		&& curl -s -o /app/sync.tar.gz -L "https://download-cdn.getsync.com/${SYNC_VER}/linux-${SYNC_ARCH}/resilio-sync_${SYNC_ARCH}.tar.gz" \
-		&& setpriv --reuid $UID --regid $GID --clear-groups --reset-env tar xf /app/sync.tar.gz -C /app \
-		&& setpriv --reuid $UID --regid $GID --clear-groups --reset-env rm -f /app/sync.tar.gz
+		&& spriv tar xf /app/sync.tar.gz -C /app \
+		&& spriv rm -f /app/sync.tar.gz
 }
 
 rsrepl()
 {
-	setpriv --reuid $UID --regid $GID --clear-groups --reset-env \
-	curl -s -o /app/version_new.txt -L "https://download-cdn.getsync.com/${SYNC_VER}/linux-${SYNC_ARCH}/version.txt"
+	spriv curl -s -o /app/version_new.txt -L "https://download-cdn.getsync.com/${SYNC_VER}/linux-${SYNC_ARCH}/version.txt"
 	if [[ -f /app/version.txt && -f /app/version_new.txt ]]; then
 		mapfile -t < /app/version.txt
 		local OLDV=${MAPFILE[0]}
@@ -61,10 +64,6 @@ settime()
 settime
 fixperms
 
-if [[ ! -e /app/rslsync ]]; then
-	rsinst
-else
-	rsrepl
-fi
+[[ ! -e /app/rslsync ]] && rsinst || rsrepl
 
 exec setpriv --reuid $UID --regid $GID --clear-groups --reset-env "$@"
