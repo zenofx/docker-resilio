@@ -22,6 +22,7 @@ jobs:
       run: |
             echo "$DOCKER_TOKEN" | docker login --username "$DOCKER_USERNAME" --password-stdin
             docker push zeno/resilio:latest
+            docker push zeno/resilio:${{ steps.vars.outputs.docker_tag }}
             docker logout
       env:
         DOCKER_USERNAME: ${{ secrets.DOCKER_REGISTRY_USER }}
